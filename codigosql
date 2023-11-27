@@ -1,0 +1,81 @@
+import mysql.connector
+import re
+
+try:
+    # Conexión a la base de datos
+    cnx = mysql.connector.connect(user='root', password='root',
+                                  host='localhost',
+                                  database='ferreteria',port='3306')
+
+    while True:
+        print("""Bienvenido al sistema de órdenes:
+        1. Insertar una nueva orden.
+        2. Actualizar una orden.
+        3. Eliminar una orden.
+        4. Salir
+        """)
+
+        opcion = int(input("Por favor, seleccione un número: "))
+
+        if opcion == 1:
+            # Código para insertar una nueva orden
+            id_orden = input("Introduce el id de la orden: ")
+            pattern = r'\d{1,6}'
+            validationfull = re.fullmatch(pattern, id_orden)
+
+            while validationfull is None:
+                print("Introduce el id de la orden DEBE SER ENTRE 1 Y 6 DIGITOS")
+                id_orden = input()
+                validationfull = re.fullmatch(pattern, id_orden)
+
+            if cnx and cnx.is_connected():
+                id_orden = int(id_orden)
+                total_compra = float(input("Ingrese el total de la compra: "))
+                fecha = input("Ingrese la fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
+                id_cliente = int(input("Ingrese el id del cliente: "))
+                
+                with cnx.cursor() as cursor:
+                    # Utilizamos la sentencia SQL INSERT INTO ON DUPLICATE KEY UPDATE para insertar o actualizar la orden
+                    cursor.execute("INSERT INTO orden (id, total_compra, fecha, id_cliente) VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE total_compra=%s, fecha=%s, id_cliente=%s",
+                                   (id_orden, total_compra, fecha, id_cliente, total_compra, fecha, id_cliente))
+                    
+                cnx.commit()
+                print("Orden insertada o actualizada exitosamente.")
+            else:
+                print("No se pudo conectar a la base de datos.")
+            
+        elif opcion == 2:
+            # Código para actualizar una orden
+            id_orden = int(input("Ingrese el ID de la orden que desea actualizar: "))
+            total_compra = float(input("Ingrese el nuevo total de la compra: "))
+            fecha = input("Ingrese la nueva fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
+            id_cliente = int(input("Ingrese el nuevo ID del cliente: "))
+
+            with cnx.cursor() as cursor:
+                # Utilizamos la sentencia SQL UPDATE para actualizar la orden
+                cursor.execute("UPDATE orden SET total_compra=%s, fecha=%s, id_cliente=%s WHERE id=%s",
+                               (total_compra, fecha, id_cliente, id_orden))
+            
+            cnx.commit()
+            print("Orden actualizada exitosamente.")
+
+        elif opcion == 3:
+            # Código para eliminar una orden
+            id_orden_eliminar = int(input("Ingrese el ID de la orden que desea eliminar: "))
+
+            with cnx.cursor() as cursor:
+                # Utilizamos la sentencia SQL DELETE para eliminar la orden
+                cursor.execute("DELETE FROM orden WHERE id=%s", (id_orden_eliminar,))
+            
+            cnx.commit()
+            print("Orden eliminada exitosamente.")
+
+        elif opcion == 4:
+            break
+
+except mysql.connector.Error as err:
+    print(f"Se produjo un error: {err}")
+finally:
+    # Cerrar la conexión al salir del bucle
+    if cnx:
+        cnx.close()
