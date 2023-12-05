@@ -1,0 +1,46 @@
+     
+        elif opcion == 2:
+            # Código para actualizar una orden
+            id_orden = int(input("Ingrese el ID de la orden que desea actualizar: "))
+            total_compra = float(input("Ingrese el nuevo total de la compra: "))
+            fecha = input("Ingrese la nueva fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
+            id_cliente = int(input("Ingrese el nuevo ID del cliente: "))
+
+            
+            
+            #Este bloque de código crea un cursor y luego ejecuta una consulta SQL para actualizar la orden especificada en la base de datos.
+            with cnx.cursor() as cursor:
+                # Utilizamos la sentencia SQL UPDATE para actualizar la orden
+                cursor.execute("UPDATE orden SET total_compra=%s, fecha=%s, id_cliente=%s WHERE id=%s",
+                               (total_compra, fecha, id_cliente, id_orden))
+            
+            cnx.commit()
+            print("Orden actualizada exitosamente.")
+
+        elif opcion == 3:
+            # Código para eliminar una orden
+            id_orden_eliminar = int(input("Ingrese el ID de la orden que desea eliminar: "))
+
+            with cnx.cursor() as cursor:
+                # Utilizamos la sentencia SQL DELETE para eliminar la orden
+                cursor.execute("DELETE FROM orden WHERE id=%s", (id_orden_eliminar,))
+            
+            cnx.commit()
+            print("Orden eliminada exitosamente.")
+
+        elif opcion == 4:
+            break
+        
+        
+        #Este es el inicio de un bloque except. Este bloque se ejecuta 
+        #si se produce una excepción durante la ejecución del bloque try. En este caso, imprime el error que se produjo.
+
+except mysql.connector.Error as err:
+    print(f"Se produjo un error: {err}")
+    
+    #Este es el inicio de un bloque finally. Este bloque se ejecuta independientemente de 
+    # si se produjo una excepción o no. En este caso, cierra la conexión a la base de datos si está abierta.
+finally:
+    # Cerrar la conexión al salir del bucle
+    if cnx:
+        cnx.close()
