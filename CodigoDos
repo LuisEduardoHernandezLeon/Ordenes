@@ -1,45 +1,118 @@
-     
+import mysql.connector
+import re
+
+try:
+    # Conexión a la base de datos
+    cnx = mysql.connector.connect(user='root', password='root',
+                                  host='localhost',
+                                  database='ferreteria',port='3306')
+
+    while True:
+        print("""Bienvenido al sistema de órdenes:
+        1. Insertar una nueva orden.
+        2. Actualizar una orden.
+        3. Eliminar una orden.
+        4. Salir
+        """)
+
+        opcion = int(input("Por favor, seleccione un número: "))
+
+        if opcion == 1:
+            # Código para insertar una nueva orden
+            id_orden = input("Introduce el id de la orden: ")
+            pattern = r'^\d{1,6}$'
+            validationfull = re.fullmatch(pattern, id_orden)
+
+            while validationfull is None:
+                print("Introduce el id de la orden DEBE SER ENTRE 1 Y 6 DIGITOS")
+                id_orden = input()
+                validationfull = re.fullmatch(pattern, id_orden)
+
+            if cnx and cnx.is_connected():
+                id_orden = int(id_orden)
+                total_compra = float(input("Ingrese el total de la compra: "))
+                fecha = input("Ingrese la fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
+                id_cliente = int(input("Ingrese el id del cliente: "))
+                
+                with cnx.cursor() as cursor:
+                    # Utilizamos la sentencia SQL INSERT INTO ON DUPLICATE KEY UPDATE para insertar o actualizar la orden
+                    cursor.execute("INSERT INTO orden (id, total_compra, fecha, id_cliente) VALUES (%s, %s, %s, %s) ON DUPLICATE KEY UPDATE total_compra=%s, fecha=%s, id_cliente=%s",
+                                   (id_orden, total_compra, fecha, id_cliente, total_compra, fecha, id_cliente))
+                    
+                cnx.commit()
+                print("Orden insertada o actualizada exitosamente.")
+            else:
+                print("No se pudo conectar a la base de datos.")
+            
         elif opcion == 2:
             # Código para actualizar una orden
-            id_orden = int(input("Ingrese el ID de la orden que desea actualizar: "))
-            total_compra = float(input("Ingrese el nuevo total de la compra: "))
-            fecha = input("Ingrese la nueva fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
-            id_cliente = int(input("Ingrese el nuevo ID del cliente: "))
+            id_orden = input("Ingrese el ID de la orden que desea actualizar: ")
+            pattern_id = r'^\d{1,6}$'
+            validation_id = re.fullmatch(pattern_id, id_orden)
 
-            
-            
-            #Este bloque de código crea un cursor y luego ejecuta una consulta SQL para actualizar la orden especificada en la base de datos.
+            while validation_id is None:
+                print("El ID de la orden debe ser un número de entre 1 y 6 dígitos")
+                id_orden = input()
+                validation_id = re.fullmatch(pattern_id, id_orden)
+
+            total_compra = input("Ingrese el nuevo total de la compra: ")
+            pattern_total = r'^\d+(\.\d{1,2})?$'
+            validation_total = re.fullmatch(pattern_total, total_compra)
+
+            while validation_total is None:
+                print("El total de la compra debe ser un número con hasta dos decimales")
+                total_compra = input()
+                validation_total = re.fullmatch(pattern_total, total_compra)
+
+            fecha = input("Ingrese la nueva fecha de la orden en formato dd-mm-aaaa utilizando los guiones para separar:")
+            pattern_fecha = r'^\d{2}-\d{2}-\d{4}$'
+            validation_fecha = re.fullmatch(pattern_fecha, fecha)
+
+            while validation_fecha is None:
+                print("La fecha debe estar en formato dd-mm-aaaa")
+                fecha = input()
+                validation_fecha = re.fullmatch(pattern_fecha, fecha)
+
+            id_cliente = input("Ingrese el nuevo ID del cliente: ")
+            pattern_cliente = r'^\d{1,6}$'
+            validation_cliente = re.fullmatch(pattern_cliente, id_cliente)
+
+            while validation_cliente is None:
+                print("El ID del cliente debe ser un número de entre 1 y 6 dígitos")
+                id_cliente = input()
+                validation_cliente = re.fullmatch(pattern_cliente, id_cliente)
+
             with cnx.cursor() as cursor:
                 # Utilizamos la sentencia SQL UPDATE para actualizar la orden
                 cursor.execute("UPDATE orden SET total_compra=%s, fecha=%s, id_cliente=%s WHERE id=%s",
-                               (total_compra, fecha, id_cliente, id_orden))
+                               (float(total_compra), fecha, int(id_cliente), int(id_orden)))
             
             cnx.commit()
             print("Orden actualizada exitosamente.")
 
         elif opcion == 3:
             # Código para eliminar una orden
-            id_orden_eliminar = int(input("Ingrese el ID de la orden que desea eliminar: "))
+            id_orden_eliminar = input("Ingrese el ID de la orden que desea eliminar: ")
+            pattern_eliminar = r'^\d{1,6}$'
+            validation_eliminar = re.fullmatch(pattern_eliminar, id_orden_eliminar)
+
+            while validation_eliminar is None:
+                print("El ID de la orden debe ser un número de entre 1 y 6 dígitos")
+                id_orden_eliminar = input()
+                validation_eliminar = re.fullmatch(pattern_eliminar, id_orden_eliminar)
 
             with cnx.cursor() as cursor:
                 # Utilizamos la sentencia SQL DELETE para eliminar la orden
-                cursor.execute("DELETE FROM orden WHERE id=%s", (id_orden_eliminar,))
+                cursor.execute("DELETE FROM orden WHERE id=%s", (int(id_orden_eliminar),))
             
             cnx.commit()
             print("Orden eliminada exitosamente.")
 
         elif opcion == 4:
             break
-        
-        
-        #Este es el inicio de un bloque except. Este bloque se ejecuta 
-        #si se produce una excepción durante la ejecución del bloque try. En este caso, imprime el error que se produjo.
 
 except mysql.connector.Error as err:
     print(f"Se produjo un error: {err}")
-    
-    #Este es el inicio de un bloque finally. Este bloque se ejecuta independientemente de 
-    # si se produjo una excepción o no. En este caso, cierra la conexión a la base de datos si está abierta.
 finally:
     # Cerrar la conexión al salir del bucle
     if cnx:
